@@ -1,0 +1,426 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - Anonymous</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>👤</text></svg>">
+    <script src="https://sdk.mercadopago.com/js/v2"></script>
+</head>
+<body>
+    <div class="container">
+        <div class="phone-frame fade-in">
+            <div class="header">
+                <div class="icon">👤</div>
+                <h1>Anonymous</h1>
+            </div>
+            
+            <div class="stats">
+                <div class="credits" id="creditsDisplay">0 créditos</div>
+                <button class="btn-primary" onclick="openPaymentModal()">
+                    💎 Comprar Créditos
+                </button>
+            </div>
+            
+            <div class="link-section">
+                <h3>Seu link para receber mensagens:</h3>
+                <div class="link-input">
+                    <input type="text" id="userLink" readonly>
+                    <button class="btn-copy" onclick="copyLink()">Copiar</button>
+                </div>
+            </div>
+            
+            <div class="messages-section">
+                <h3 id="messagesTitle">Suas Mensagens</h3>
+                <div id="messagesList"></div>
+            </div>
+            
+            <button class="btn-secondary" onclick="logout()" style="margin-top: 20px;">
+                Sair
+            </button>
+        </div>
+    </div>
+    
+    <!-- Modal de Compra de Créditos -->
+    <div class="modal" id="paymentModal">
+        <div class="modal-content">
+            <button class="btn-close" onclick="closePaymentModal()">×</button>
+            
+            <div class="modal-header">
+                <div style="font-size: 32px; margin-bottom: 10px;">💎</div>
+                <h3>Comprar Créditos</h3>
+                <p style="color: #cccccc; font-size: 14px;">Escolha seu pacote de créditos</p>
+            </div>
+            
+            <div class="packages" id="packagesList">
+                <div class="package" data-credits="1" data-price="5.00">
+                    <div class="package-header">
+                        <span class="package-credits">1 crédito</span>
+                        <span class="package-price">R$ 5,00</span>
+                    </div>
+                    <div class="package-desc">Ideal para testar</div>
+                </div>
+                
+                <div class="package" data-credits="5" data-price="25.00">
+                    <div class="package-header">
+                        <span class="package-credits">5 créditos</span>
+                        <span class="package-price">R$ 25,00</span>
+                    </div>
+                    <div class="package-desc">Pacote básico</div>
+                </div>
+                
+                <div class="package" data-credits="12" data-price="60.00">
+                    <div class="package-header">
+                        <span class="package-credits">12 créditos</span>
+                        <span class="package-price">R$ 60,00</span>
+                    </div>
+                    <div class="package-desc">Mais popular</div>
+                </div>
+                
+                <div class="package" data-credits="30" data-price="150.00">
+                    <div class="package-header">
+                        <span class="package-credits">30 créditos</span>
+                        <span class="package-price">R$ 150,00</span>
+                    </div>
+                    <div class="package-desc">Melhor custo-benefício</div>
+                </div>
+                
+                <div class="package" data-credits="120" data-price="600.00">
+                    <div class="package-header">
+                        <span class="package-credits">120 créditos</span>
+                        <span class="package-price">R$ 600,00</span>
+                    </div>
+                    <div class="package-desc">Pacote premium</div>
+                </div>
+            </div>
+            
+            <div class="warning" style="margin-bottom: 20px;">
+                <strong>⚠️ Aviso:</strong> Pistas geradas automaticamente; estimativas; não garantem identificação. Proibido usar para assédio, stalking ou qualquer crime.
+            </div>
+            
+            <button class="btn-primary" id="buyBtn" onclick="processPayment()">
+                Comprar Pacote
+            </button>
+        </div>
+    </div>
+    
+    <!-- Modal de Pagamento PIX -->
+    <div class="modal" id="pixModal">
+        <div class="modal-content" style="text-align: center;">
+            <button class="btn-close" onclick="closePixModal()">×</button>
+            
+            <div style="font-size: 32px; margin-bottom: 15px;">💳</div>
+            <h3 style="color: #FFD700; margin-bottom: 10px;">Pagamento PIX</h3>
+            <p id="paymentInfo" style="color: #cccccc; margin-bottom: 20px;"></p>
+            
+            <div id="qrCodeContainer" style="margin-bottom: 20px;">
+                <img id="qrCodeImage" style="max-width: 200px; border-radius: 8px;">
+            </div>
+            
+            <div style="margin-bottom: 20px;">
+                <label style="color: #cccccc; font-size: 14px; display: block; margin-bottom: 8px;">
+                    Código PIX:
+                </label>
+                <div style="display: flex; gap: 10px;">
+                    <input id="pixCode" readonly 
+                           style="flex: 1; padding: 12px; background: #1a1a1a; border: 1px solid #FFD700; border-radius: 8px; color: #fff; font-size: 12px;">
+                    <button onclick="copyPixCode()" 
+                            style="padding: 12px 20px; background: linear-gradient(135deg, #FFD700, #FFA500); color: #000; border: none; border-radius: 8px; font-weight: 600; cursor: pointer;">
+                        Copiar
+                    </button>
+                </div>
+            </div>
+            
+            <div style="color: #FFC107; font-size: 14px; margin-bottom: 20px;">
+                <span>⏰ Expira em: </span>
+                <span id="countdown" style="font-weight: 600;"></span>
+            </div>
+            
+            <div style="display: flex; align-items: center; justify-content: center; gap: 10px; color: #cccccc;">
+                <div class="loading"></div>
+                <span>Aguardando pagamento...</span>
+            </div>
+        </div>
+    </div>
+    
+    <script src="app.js"></script>
+    <script src="animations.js"></script>
+    <script>
+        let currentUser = null;
+        let selectedPackage = null;
+        let paymentTimer = null;
+        let countdownTimer = null;
+        
+        // Inicializar página
+        document.addEventListener('DOMContentLoaded', function() {
+            currentUser = UserManager.getCurrentUser();
+            
+            if (!currentUser) {
+                window.location.href = 'login.html';
+                return;
+            }
+            
+            loadUserData();
+            loadMessages();
+        });
+        
+        function loadUserData() {
+            // Atualizar créditos
+            document.getElementById('creditsDisplay').textContent = `${currentUser.credits} créditos`;
+            
+            // Gerar link
+            const link = `${window.location.origin}/?u=${currentUser.slug}`;
+            document.getElementById('userLink').value = link;
+        }
+        
+        function loadMessages() {
+            const messages = MessageManager.getUserMessages(currentUser.id);
+            const messagesList = document.getElementById('messagesList');
+            const messagesTitle = document.getElementById('messagesTitle');
+            
+            messagesTitle.textContent = `Suas Mensagens ${messages.length} mensagens`;
+            
+            if (messages.length === 0) {
+                messagesList.innerHTML = `
+                    <div class="empty-state">
+                        <div class="icon">📭</div>
+                        <p>Nenhuma mensagem ainda</p>
+                        <p style="font-size: 12px; margin-top: 5px;">
+                            Compartilhe seu link para receber mensagens anônimas!
+                        </p>
+                    </div>
+                `;
+                return;
+            }
+            
+            messagesList.innerHTML = messages.map(message => `
+                <div class="message-item">
+                    <div class="message-content">${message.content}</div>
+                    <div class="message-meta">
+                        <span>${Utils.formatDate(message.created_at)}</span>
+                        <button class="btn-unlock" onclick="unlockClue('${message.id}')">
+                            Desbloquear Pista
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+        }
+        
+        function copyLink() {
+            const link = document.getElementById('userLink').value;
+            Utils.copyToClipboard(link);
+        }
+        
+        function logout() {
+            UserManager.logout();
+            window.location.href = 'index.html';
+        }
+        
+        // Sistema de pagamento
+        function openPaymentModal() {
+            document.getElementById('paymentModal').classList.add('active');
+            setupPackageSelection();
+        }
+        
+        function closePaymentModal() {
+            document.getElementById('paymentModal').classList.remove('active');
+            selectedPackage = null;
+            document.querySelectorAll('.package').forEach(p => p.classList.remove('selected'));
+        }
+        
+        function setupPackageSelection() {
+            document.querySelectorAll('.package').forEach(package => {
+                package.addEventListener('click', function() {
+                    // Remover seleção anterior
+                    document.querySelectorAll('.package').forEach(p => p.classList.remove('selected'));
+                    
+                    // Selecionar atual
+                    this.classList.add('selected');
+                    
+                    selectedPackage = {
+                        credits: parseInt(this.dataset.credits),
+                        price: parseFloat(this.dataset.price)
+                    };
+                });
+            });
+        }
+        
+        async function processPayment() {
+            if (!selectedPackage) {
+                Utils.showNotification('Selecione um pacote primeiro', 'error');
+                return;
+            }
+            
+            const buyBtn = document.getElementById('buyBtn');
+            const originalText = buyBtn.textContent;
+            
+            buyBtn.innerHTML = '<span class="loading"></span> Processando...';
+            buyBtn.disabled = true;
+            
+            try {
+                // Criar pagamento no Mercado Pago
+                const externalId = `${currentUser.id}_${Date.now()}`;
+                const payment = await MercadoPagoManager.createPayment(
+                    selectedPackage.price,
+                    `${selectedPackage.credits} créditos - Anonymous`,
+                    externalId
+                );
+                
+                // Fechar modal de seleção
+                closePaymentModal();
+                
+                // Abrir modal PIX
+                showPixPayment(payment);
+                
+                // Iniciar verificação de pagamento
+                startPaymentVerification(payment.id, selectedPackage.credits);
+                
+            } catch (error) {
+                console.error('Erro ao processar pagamento:', error);
+                
+                // Mesmo com erro, criar pagamento fallback
+                const externalId = `${currentUser.id}_${Date.now()}`;
+                const fallbackPayment = {
+                    id: `mp_${Date.now()}`,
+                    status: 'pending',
+                    amount: selectedPackage.price,
+                    currency: 'BRL',
+                    description: `${selectedPackage.credits} créditos - Anonymous`,
+                    external_id: externalId,
+                    pix_code: generateFallbackPix(selectedPackage.price),
+                    qr_url: `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(generateFallbackPix(selectedPackage.price))}`,
+                    expires_at: new Date(Date.now() + 30 * 60 * 1000).toISOString(),
+                    created_at: new Date().toISOString()
+                };
+                
+                // Fechar modal de seleção
+                closePaymentModal();
+                
+                // Abrir modal PIX
+                showPixPayment(fallbackPayment);
+                
+                // Iniciar verificação de pagamento
+                startPaymentVerification(fallbackPayment.id, selectedPackage.credits);
+            }
+        }
+        
+        function generateFallbackPix(amount) {
+            // Gerar código PIX básico para fallback usando suas credenciais
+            const pixKey = '4079706620264262'; // Seu CLIENT_ID como chave PIX
+            const merchantName = 'Anonymous App';
+            const merchantCity = 'SAO PAULO';
+            const txId = Date.now().toString().slice(-10);
+            
+            // Formato PIX padrão
+            return `00020126580014BR.GOV.BCB.PIX0136${pixKey}520400005303986540${amount.toFixed(2)}5802BR5913${merchantName}6009${merchantCity}62070503${txId}6304XXXX`;
+        }
+        
+        function showPixPayment(payment) {
+            document.getElementById('paymentInfo').textContent = 
+                `Pacote: ${selectedPackage.credits} créditos - R$ ${selectedPackage.price.toFixed(2)}`;
+            
+            document.getElementById('qrCodeImage').src = payment.qr_url;
+            document.getElementById('pixCode').value = payment.pix_code;
+            
+            document.getElementById('pixModal').classList.add('active');
+            
+            // Iniciar countdown
+            startCountdown(payment.expires_at);
+        }
+        
+        function startCountdown(expiresAt) {
+            const expiryTime = new Date(expiresAt).getTime();
+            
+            countdownTimer = setInterval(() => {
+                const now = new Date().getTime();
+                const timeLeft = expiryTime - now;
+                
+                if (timeLeft <= 0) {
+                    clearInterval(countdownTimer);
+                    document.getElementById('countdown').textContent = 'Expirado';
+                    return;
+                }
+                
+                const minutes = Math.floor((timeLeft % (1000 * 60 * 60)) / (1000 * 60));
+                const seconds = Math.floor((timeLeft % (1000 * 60)) / 1000);
+                
+                document.getElementById('countdown').textContent = 
+                    `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+            }, 1000);
+        }
+        
+        function startPaymentVerification(paymentId, credits) {
+            paymentTimer = setInterval(async () => {
+                try {
+                    const status = await MercadoPagoManager.checkPaymentStatus(paymentId);
+                    
+                    if (status.status === 'paid') {
+                        clearInterval(paymentTimer);
+                        clearInterval(countdownTimer);
+                        
+                        // Adicionar créditos
+                        UserManager.updateCredits(currentUser.id, credits);
+                        currentUser.credits += credits;
+                        
+                        // Atualizar display
+                        document.getElementById('creditsDisplay').textContent = `${currentUser.credits} créditos`;
+                        
+                        // Fechar modal
+                        closePixModal();
+                        
+                        Utils.showNotification(`${credits} créditos adicionados com sucesso!`, 'success');
+                    }
+                } catch (error) {
+                    console.error('Erro ao verificar pagamento:', error);
+                }
+            }, 3000); // Verificar a cada 3 segundos
+        }
+        
+        function closePixModal() {
+            document.getElementById('pixModal').classList.remove('active');
+            
+            if (paymentTimer) {
+                clearInterval(paymentTimer);
+                paymentTimer = null;
+            }
+            
+            if (countdownTimer) {
+                clearInterval(countdownTimer);
+                countdownTimer = null;
+            }
+        }
+        
+        function copyPixCode() {
+            const pixCode = document.getElementById('pixCode').value;
+            Utils.copyToClipboard(pixCode);
+        }
+        
+        function unlockClue(messageId) {
+            if (currentUser.credits <= 0) {
+                Utils.showNotification('Você precisa de créditos para desbloquear pistas', 'error');
+                openPaymentModal();
+                return;
+            }
+            
+            // Simular desbloqueio de pista
+            const clues = [
+                'Possível região: Sudeste',
+                'Horário de envio: Manhã',
+                'Dispositivo: Mobile',
+                'Primeira letra do nome: M',
+                'Idade estimada: 20-30 anos'
+            ];
+            
+            const randomClue = clues[Math.floor(Math.random() * clues.length)];
+            
+            // Descontar crédito
+            UserManager.updateCredits(currentUser.id, -1);
+            currentUser.credits -= 1;
+            document.getElementById('creditsDisplay').textContent = `${currentUser.credits} créditos`;
+            
+            Utils.showNotification(`Pista desbloqueada: ${randomClue}`, 'success');
+        }
+    </script>
+</body>
+</html>

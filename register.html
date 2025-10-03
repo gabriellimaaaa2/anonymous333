@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Criar Conta - Anonymous</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>👤</text></svg>">
+</head>
+<body>
+    <div class="container">
+        <div class="phone-frame fade-in">
+            <div class="header">
+                <div class="icon">👤</div>
+                <h1>Anonymous</h1>
+                <p>Crie sua conta para receber mensagens anônimas</p>
+            </div>
+            
+            <form id="registerForm">
+                <div class="form-group">
+                    <label for="username">Nome de usuário</label>
+                    <input type="text" id="username" name="username" required 
+                           placeholder="Escolha um nome único" 
+                           pattern="[a-zA-Z0-9_]+" 
+                           title="Apenas letras, números e underscore">
+                </div>
+                
+                <div class="form-group">
+                    <label for="email">Email</label>
+                    <input type="email" id="email" name="email" required 
+                           placeholder="seu@email.com">
+                </div>
+                
+                <div class="form-group">
+                    <label for="password">Senha</label>
+                    <input type="password" id="password" name="password" required 
+                           placeholder="Mínimo 6 caracteres" 
+                           minlength="6">
+                </div>
+                
+                <div class="warning">
+                    <strong>⚠️ Importante:</strong> Não há recuperação de conta. Guarde bem suas credenciais!
+                </div>
+                
+                <button type="submit" class="btn-primary" id="submitBtn">
+                    Criar Conta
+                </button>
+            </form>
+            
+            <div style="text-align: center; margin-top: 20px;">
+                <span style="color: #888888; font-size: 14px;">Já tem conta? </span>
+                <a href="login.html" style="color: #FFD700; text-decoration: none; font-weight: 600;">
+                    Entrar
+                </a>
+            </div>
+            
+            <a href="index.html" class="back-link">← Voltar ao início</a>
+        </div>
+    </div>
+    
+    <script src="app.js"></script>
+    <script src="animations.js"></script>
+    <script>
+        document.getElementById('registerForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const submitBtn = document.getElementById('submitBtn');
+            const originalText = submitBtn.textContent;
+            
+            try {
+                const username = document.getElementById('username').value.trim();
+                const email = document.getElementById('email').value.trim();
+                const password = document.getElementById('password').value;
+                
+                // Validações
+                if (!username || !email || !password) {
+                    throw new Error('Todos os campos são obrigatórios');
+                }
+                
+                if (username.length < 3) {
+                    throw new Error('Nome de usuário deve ter pelo menos 3 caracteres');
+                }
+                
+                if (!/^[a-zA-Z0-9_]+$/.test(username)) {
+                    throw new Error('Nome de usuário deve conter apenas letras, números e underscore');
+                }
+                
+                if (password.length < 6) {
+                    throw new Error('Senha deve ter pelo menos 6 caracteres');
+                }
+                
+                submitBtn.innerHTML = '<span class="loading"></span> Criando...';
+                submitBtn.disabled = true;
+                
+                // Simular delay
+                setTimeout(() => {
+                    try {
+                        const user = UserManager.createUser(username, email, password);
+                        Utils.showNotification('Conta criada com sucesso!', 'success');
+                        
+                        // Redirecionar para dashboard
+                        setTimeout(() => {
+                            window.location.href = 'dashboard.html';
+                        }, 1000);
+                        
+                    } catch (error) {
+                        Utils.showNotification(error.message, 'error');
+                        submitBtn.textContent = originalText;
+                        submitBtn.disabled = false;
+                    }
+                }, 1000);
+                
+            } catch (error) {
+                Utils.showNotification(error.message, 'error');
+                submitBtn.textContent = originalText;
+                submitBtn.disabled = false;
+            }
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Anonymous - Mensagens Anônimas</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>👤</text></svg>">
+</head>
+<body>
+    <div class="container">
+        <div class="phone-frame">
+            <!-- Página de envio de mensagem (quando tem parâmetro ?u=) -->
+            <div id="sendPage" style="display: none;">
+                <div class="header">
+                    <div class="icon">👤</div>
+                    <h1>Anonymous</h1>
+                    <p id="targetUser">Envie uma mensagem anônima</p>
+                </div>
+                
+                <form id="messageForm">
+                    <div class="form-group">
+                        <label for="message">Sua mensagem anônima</label>
+                        <textarea id="message" name="message" required 
+                                  placeholder="Digite sua mensagem aqui..." 
+                                  maxlength="500" rows="6"></textarea>
+                        <div style="text-align: right; font-size: 12px; color: #888; margin-top: 5px;">
+                            <span id="charCount">0</span>/500 caracteres
+                        </div>
+                    </div>
+                    
+                    <!-- Captcha simples -->
+                    <div class="form-group">
+                        <label>Verificação (some os números):</label>
+                        <div style="display: flex; align-items: center; gap: 10px;">
+                            <span id="captchaQuestion" style="color: #FFD700; font-size: 18px; font-weight: 600;"></span>
+                            <input type="number" id="captchaAnswer" required 
+                                   style="width: 80px;" placeholder="?">
+                        </div>
+                    </div>
+                    
+                    <button type="submit" class="btn-primary" id="submitBtn">
+                        Enviar Mensagem
+                    </button>
+                </form>
+                
+                <div class="warning">
+                    <strong>🔒 Privacidade:</strong> Sua mensagem será enviada de forma completamente anônima. O destinatário não saberá quem enviou.
+                </div>
+                
+                <a href="javascript:showHomePage()" class="back-link">← Voltar ao início</a>
+            </div>
+
+            <!-- Página inicial (quando não tem parâmetros) -->
+            <div id="homePage">
+                <div class="header">
+                    <div class="icon">👤</div>
+                    <h1>Anonymous</h1>
+                </div>
+                
+                <div class="hero">
+                    <h2>100% Anônimo</h2>
+                    <p>Receba mensagens completamente anônimas</p>
+                </div>
+                
+                <div class="features">
+                    <div class="feature">
+                        <span class="feature-icon">⚡</span>
+                        <h3>Rápido e Fácil</h3>
+                        <p>Configure em segundos</p>
+                    </div>
+                    
+                    <div class="feature">
+                        <span class="feature-icon">💎</span>
+                        <h3>Premium Experience</h3>
+                        <p>Interface elegante e funcionalidades avançadas</p>
+                    </div>
+                </div>
+                
+                <div class="how-it-works">
+                    <h3>Como Funciona</h3>
+                    <div class="steps">
+                        <div class="step">
+                            <span class="step-number">1</span>
+                            <p>Crie sua conta e compartilhe seu link</p>
+                        </div>
+                        <div class="step">
+                            <span class="step-number">2</span>
+                            <p>Receba mensagens anônimas</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="cta-buttons">
+                    <button class="btn-primary" onclick="window.location.href='register.html'">
+                        Criar Conta
+                    </button>
+                    <button class="btn-secondary" onclick="window.location.href='login.html'">
+                        Entrar
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Modal de sucesso -->
+    <div class="modal" id="successModal">
+        <div class="modal-content" style="text-align: center;">
+            <div style="font-size: 48px; margin-bottom: 20px;">✅</div>
+            <h3 style="color: #28a745; margin-bottom: 15px;">Mensagem Enviada!</h3>
+            <p style="color: #cccccc; margin-bottom: 25px;">
+                Sua mensagem anônima foi enviada com sucesso!
+            </p>
+            
+            <div style="background: rgba(255, 215, 0, 0.1); border: 1px solid rgba(255, 215, 0, 0.3); border-radius: 8px; padding: 15px; margin-bottom: 25px;">
+                <p style="color: #FFD700; font-weight: 600; margin-bottom: 10px;">
+                    Quer receber mensagens também?
+                </p>
+                <p style="color: #cccccc; font-size: 14px;">
+                    Crie sua conta e comece a receber mensagens anônimas!
+                </p>
+            </div>
+            
+            <div style="display: grid; gap: 10px;">
+                <button class="btn-primary" onclick="window.location.href='register.html'">
+                    Criar Minha Conta
+                </button>
+                <button class="btn-secondary" onclick="closeSuccessModal()">
+                    Fechar
+                </button>
+            </div>
+        </div>
+    </div>
+    
+    <script src="app.js"></script>
+    <script src="animations.js"></script>
+    <script>
+        let targetSlug = null;
+        let captchaAnswer = 0;
+        
+        // Verificar se é página de envio ou home
+        function checkPageType() {
+            const userSlug = Utils.getUrlParameter('u');
+            
+            if (userSlug) {
+                // Mostrar página de envio
+                targetSlug = userSlug;
+                showSendPage();
+            } else {
+                // Mostrar página inicial
+                showHomePage();
+            }
+        }
+        
+        function showSendPage() {
+            document.getElementById('homePage').style.display = 'none';
+            document.getElementById('sendPage').style.display = 'block';
+            
+            // Verificar se usuário existe
+            if (!checkUserExists(targetSlug)) {
+                return;
+            }
+            
+            // Configurar página
+            generateCaptcha();
+            setupCharCounter();
+            
+            // Atualizar título
+            document.title = `Enviar mensagem para ${targetSlug} - Anonymous`;
+        }
+        
+        function showHomePage() {
+            document.getElementById('sendPage').style.display = 'none';
+            document.getElementById('homePage').style.display = 'block';
+            document.title = 'Anonymous - Mensagens Anônimas';
+            
+            // Limpar URL
+            if (window.location.search) {
+                window.history.replaceState({}, document.title, window.location.pathname);
+            }
+        }
+        
+        // Verificar se usuário existe
+        function checkUserExists(slug) {
+            const user = UserManager.getUserBySlug(slug);
+            
+            if (user) {
+                document.getElementById('targetUser').textContent = 
+                    `Envie uma mensagem anônima para ${user.username}`;
+                return true;
+            } else {
+                document.getElementById('targetUser').innerHTML = 
+                    '<span style="color: #dc3545;">Usuário não encontrado</span>';
+                document.getElementById('messageForm').style.display = 'none';
+                return false;
+            }
+        }
+        
+        // Gerar captcha simples
+        function generateCaptcha() {
+            const num1 = Math.floor(Math.random() * 10) + 1;
+            const num2 = Math.floor(Math.random() * 10) + 1;
+            captchaAnswer = num1 + num2;
+            document.getElementById('captchaQuestion').textContent = `${num1} + ${num2} =`;
+        }
+        
+        // Contador de caracteres
+        function setupCharCounter() {
+            const textarea = document.getElementById('message');
+            const charCount = document.getElementById('charCount');
+            
+            if (!textarea || !charCount) return;
+            
+            textarea.addEventListener('input', function() {
+                const count = this.value.length;
+                charCount.textContent = count;
+                
+                if (count > 450) {
+                    charCount.style.color = '#dc3545';
+                } else if (count > 400) {
+                    charCount.style.color = '#ffc107';
+                } else {
+                    charCount.style.color = '#888';
+                }
+            });
+        }
+        
+        // Enviar mensagem
+        document.addEventListener('DOMContentLoaded', function() {
+            const messageForm = document.getElementById('messageForm');
+            if (messageForm) {
+                messageForm.addEventListener('submit', function(e) {
+                    e.preventDefault();
+                    
+                    const submitBtn = document.getElementById('submitBtn');
+                    const originalText = submitBtn.textContent;
+                    
+                    try {
+                        const message = document.getElementById('message').value.trim();
+                        const userCaptcha = parseInt(document.getElementById('captchaAnswer').value);
+                        
+                        // Validações
+                        if (!message) {
+                            throw new Error('Mensagem não pode estar vazia');
+                        }
+                        
+                        if (message.length > 500) {
+                            throw new Error('Mensagem muito longa (máximo 500 caracteres)');
+                        }
+                        
+                        if (userCaptcha !== captchaAnswer) {
+                            throw new Error('Verificação incorreta. Tente novamente.');
+                        }
+                        
+                        submitBtn.innerHTML = '<span class="loading"></span> Enviando...';
+                        submitBtn.disabled = true;
+                        
+                        // Enviar mensagem
+                        MessageManager.sendMessage(targetSlug, message);
+                        
+                        // Mostrar modal de sucesso após 1.5s
+                        setTimeout(() => {
+                            document.getElementById('successModal').classList.add('active');
+                            
+                            // Reset form
+                            document.getElementById('messageForm').reset();
+                            document.getElementById('charCount').textContent = '0';
+                            generateCaptcha();
+                            
+                            submitBtn.textContent = originalText;
+                            submitBtn.disabled = false;
+                        }, 1500);
+                        
+                    } catch (error) {
+                        Utils.showNotification(error.message, 'error');
+                        submitBtn.textContent = originalText;
+                        submitBtn.disabled = false;
+                        
+                        // Regenerar captcha em caso de erro
+                        generateCaptcha();
+                        document.getElementById('captchaAnswer').value = '';
+                    }
+                });
+            }
+        });
+        
+        function closeSuccessModal() {
+            document.getElementById('successModal').classList.remove('active');
+        }
+        
+        // Inicializar página
+        document.addEventListener('DOMContentLoaded', function() {
+            checkPageType();
+            document.querySelector('.phone-frame').classList.add('fade-in');
+        });
+    </script>
+</body>
+</html>

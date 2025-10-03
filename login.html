@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Entrar - Anonymous</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>👤</text></svg>">
+</head>
+<body>
+    <div class="container">
+        <div class="phone-frame fade-in">
+            <div class="header">
+                <div class="icon">👤</div>
+                <h1>Anonymous</h1>
+                <p>Entre na sua conta</p>
+            </div>
+            
+            <form id="loginForm">
+                <div class="form-group">
+                    <label for="email">Email</label>
+                    <input type="email" id="email" name="email" required 
+                           placeholder="seu@email.com">
+                </div>
+                
+                <div class="form-group">
+                    <label for="password">Senha</label>
+                    <input type="password" id="password" name="password" required 
+                           placeholder="Sua senha">
+                </div>
+                
+                <button type="submit" class="btn-primary" id="submitBtn">
+                    Entrar
+                </button>
+            </form>
+            
+            <div style="text-align: center; margin-top: 20px;">
+                <span style="color: #888888; font-size: 14px;">Não tem conta? </span>
+                <a href="register.html" style="color: #FFD700; text-decoration: none; font-weight: 600;">
+                    Criar conta
+                </a>
+            </div>
+            
+            <a href="index.html" class="back-link">← Voltar ao início</a>
+        </div>
+    </div>
+    
+    <script src="app.js"></script>
+    <script src="animations.js"></script>
+    <script>
+        document.getElementById('loginForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const submitBtn = document.getElementById('submitBtn');
+            const originalText = submitBtn.textContent;
+            
+            try {
+                const email = document.getElementById('email').value.trim();
+                const password = document.getElementById('password').value;
+                
+                // Validações
+                if (!email || !password) {
+                    throw new Error('Todos os campos são obrigatórios');
+                }
+                
+                submitBtn.innerHTML = '<span class="loading"></span> Entrando...';
+                submitBtn.disabled = true;
+                
+                // Simular delay
+                setTimeout(() => {
+                    try {
+                        const user = UserManager.login(email, password);
+                        Utils.showNotification('Login realizado com sucesso!', 'success');
+                        
+                        // Redirecionar para dashboard
+                        setTimeout(() => {
+                            window.location.href = 'dashboard.html';
+                        }, 1000);
+                        
+                    } catch (error) {
+                        Utils.showNotification(error.message, 'error');
+                        submitBtn.textContent = originalText;
+                        submitBtn.disabled = false;
+                    }
+                }, 1000);
+                
+            } catch (error) {
+                Utils.showNotification(error.message, 'error');
+                submitBtn.textContent = originalText;
+                submitBtn.disabled = false;
+            }
+        });
+    </script>
+</body>
+</html>
